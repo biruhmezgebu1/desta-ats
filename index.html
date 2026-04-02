@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DestaHealth ATS — Recruiting Pipeline</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{background:#F0F2F5;color:#2D2D2D;font-family:system-ui,-apple-system,sans-serif;font-size:14px;-webkit-font-smoothing:antialiased}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.card{background:#fff;border:1px solid #E0E0E0;border-radius:8px;padding:16px;margin-bottom:8px;cursor:pointer;transition:box-shadow .2s}
+.card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.sb{text-align:center;padding:12px;border-radius:8px;flex:1;min-width:80px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#1E4A8A;color:#fff;padding:8px 10px;text-align:left;font-weight:600}
+td{padding:8px 10px;border-bottom:1px solid #E0E0E0}tr:nth-child(even) td{background:#f9f9f9}
+.btn{padding:6px 14px;border-radius:4px;font-size:12px;font-weight:600;border:none;cursor:pointer;transition:opacity .15s}.btn:hover{opacity:.85}
+.input{padding:8px 10px;border:1px solid #E0E0E0;border-radius:4px;font-size:13px;width:100%}.input:focus{outline:none;border-color:#1E4A8A}
+select.input{cursor:pointer}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:.3px}
+.kanban-col{min-width:220px;max-width:260px;background:#F8F6F1;border-radius:8px;padding:10px;flex-shrink:0}
+.kanban-header{font-size:12px;font-weight:700;padding:6px 8px;border-radius:4px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.kanban-card{background:#fff;border:1px solid #E0E0E0;border-radius:6px;padding:10px;margin-bottom:6px;cursor:pointer;font-size:12px;transition:box-shadow .15s}
+.kanban-card:hover{box-shadow:0 2px 6px rgba(0,0,0,.1)}
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);z-index:1000;display:flex;align-items:center;justify-content:center}
+.modal{background:#fff;border-radius:12px;max-width:700px;width:95%;max-height:90vh;overflow-y:auto;padding:24px;position:relative}
+.tab{padding:6px 14px;border-radius:4px;font-size:12px;font-weight:600;border:1px solid #E0E0E0;background:transparent;cursor:pointer}.tab.on{background:#2D2D2D;color:#fff;border-color:#2D2D2D}
+.lic-link{display:inline-block;padding:4px 10px;background:#EBF0F8;color:#1E4A8A;border-radius:4px;font-size:11px;font-weight:600;text-decoration:none;margin:2px}
+.lic-link:hover{background:#C5D3E8}
+.note-int{border-left:3px solid #1E4A8A;padding:8px 12px;margin-bottom:6px;background:#f8f9ff;border-radius:0 4px 4px 0;font-size:13px}
+.note-ext{border-left:3px solid #8B7355;padding:8px 12px;margin-bottom:6px;background:#fdf8f2;border-radius:0 4px 4px 0;font-size:13px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+var useState=React.useState;
+var U="https://script.google.com/macros/s/AKfycbwa725xDxl3auLiZQ-AYxM1--rUOqaYCHM8RXr4mY_-5bX6qUloUUw3uufLBSD6YCBqQQ/exec";
+var C={ch:"#2D2D2D",br:"#8B7355",iv:"#F8F6F1",bl:"#1E4A8A",gn:"#4CAF50",rd:"#F44336",or:"#FF9800",gy:"#777",wh:"#fff",pu:"#7B1FA2",tl:"#00897B"};
+var post=function(d){return fetch(U,{method:"POST",body:JSON.stringify(d),mode:"no-cors"})};
+
+var STATUSES=["0 - New Candidate","1 - Initial Screening","2 - DestaHealth Review","3 - Client Submission","4 - Client Interview","5 - Offer Accepted","6 - Onboarding","7 - Placed","8 - Future Pipeline"];
+var STATUS_COLORS={"0 - New Candidate":"#42A5F5","1 - Initial Screening":"#AB47BC","2 - DestaHealth Review":"#FFA726","3 - Client Submission":"#26A69A","4 - Client Interview":"#5C6BC0","5 - Offer Accepted":"#66BB6A","6 - Onboarding":"#8D6E63","7 - Placed":"#2E7D32","8 - Future Pipeline":"#78909C"};
+var CLIENTS=["Sterling Institute","Contemporary Care","DOCs Medical Group","Ritu Suri & Associates","NJ-Psych Candidates","Future Potential Clients"];
+var SOURCES=["Indeed","LinkedIn","Physician Job Board","Therapist Job Board","Locumtenens","Referral","Cold Outreach","Scraped"];
+var CREDENTIALS=["MD","DO","PMHNP","PMHNP-BC","NP","APRN","PA","PA-C","LCSW","LPC","LMHC","LMFT","LMFT-A","LMSW","LAC","PsyD","PhD","MHT","BHT","Other"];
+var POPULATIONS=["Child/Adolescent","Adult","Geriatric","Across the Lifespan"];
+var SETTINGS=["Outpatient","Telehealth","Hybrid","IOP","PHP","Residential","Inpatient"];
+var LIC_LINKS={"CT":{name:"CT eLicense Portal",url:"https://www.elicense.ct.gov/"},"NJ":{name:"NJ Consumer Affairs",url:"https://newjersey.mylicense.com/"},"FL":{name:"FL Dept of Health MQA",url:"https://mqa-internet.doh.state.fl.us/"},"MA":{name:"MA Board of Registration",url:"https://checkalicense.mass.gov/"}};
+
+function App(){
+var _d=useState({candidates:[],notes:[],activity:[]}),db=_d[0],sDB=_d[1];
+var _l=useState(true),ld=_l[0],sL=_l[1];
+var _v=useState("kanban"),view=_v[0],sV=_v[1];
+var _sel=useState(null),sel=_sel[0],sSel=_sel[1];
+var _add=useState(false),showAdd=_add[0],sAdd=_add[1];
+var _u=useState(""),user=_u[0],sU=_u[1];
+var _us=useState(false),userSet=_us[0],sUS=_us[1];
+var _fc=useState("all"),fc=_fc[0],sFC=_fc[1];
+
+var load=function(){sL(true);fetch(U).then(function(r){return r.json()}).then(function(d){
+sDB({candidates:d.candidates||[],notes:d.notes||[],activity:d.activity||[]});sL(false)
+}).catch(function(){sL(false)})};
+
+React.useEffect(function(){load();var iv=setInterval(load,30000);return function(){clearInterval(iv)}},[]);
+
+var candidates=db.candidates;
+var filtered=fc==="all"?candidates:candidates.filter(function(c){return c.Client===fc});
+
+/* Duplicate detection */
+var isDuplicate=function(name,email){
+return candidates.some(function(c){
+return (name&&c.Name&&c.Name.toLowerCase()===name.toLowerCase())||(email&&c.Email&&email&&c.Email.toLowerCase()===email.toLowerCase());
+});
+};
+
+/* KPI calculations */
+var kpi={total:filtered.length,byStatus:{},byClient:{},bySource:{},thisWeek:0,today:0};
+var now=new Date();var weekAgo=new Date(now-7*86400000);var todayStr=now.toISOString().split("T")[0];
+STATUSES.forEach(function(s){kpi.byStatus[s]=0});
+CLIENTS.forEach(function(c){kpi.byClient[c]=0});
+SOURCES.forEach(function(s){kpi.bySource[s]=0});
+filtered.forEach(function(c){
+kpi.byStatus[c.Status]=(kpi.byStatus[c.Status]||0)+1;
+kpi.byClient[c.Client]=(kpi.byClient[c.Client]||0)+1;
+kpi.bySource[c.Source]=(kpi.bySource[c.Source]||0)+1;
+if(c.AddedAt&&new Date(c.AddedAt)>=weekAgo)kpi.thisWeek++;
+if(c.AddedAt&&c.AddedAt.indexOf&&c.AddedAt.indexOf(todayStr)===0)kpi.today++;
+});
+
+/* Login gate */
+if(!userSet)return(
+<div style={{maxWidth:400,margin:"100px auto",padding:30,textAlign:"center"}}>
+<div style={{fontFamily:"Georgia,serif",fontSize:22,letterSpacing:4,color:C.ch,marginBottom:4}}>D E S T A</div>
+<div style={{fontFamily:"Georgia,serif",fontSize:22,letterSpacing:4,color:C.br,marginBottom:20}}>W O R K S</div>
+<div style={{fontSize:18,fontWeight:700,color:C.bl,marginBottom:4}}>DestaHealth ATS</div>
+<div style={{fontSize:13,color:C.gy,marginBottom:24}}>Recruiting Pipeline</div>
+<input className="input" value={user} onChange={function(e){sU(e.target.value)}} onKeyDown={function(e){if(e.key==="Enter"&&user.trim())sUS(true)}} placeholder="Enter your name to log in..." style={{marginBottom:12,textAlign:"center"}}/>
+<button className="btn" onClick={function(){if(user.trim())sUS(true)}} style={{background:C.bl,color:C.wh,padding:"10px 30px",fontSize:14,opacity:user.trim()?1:.4}}>Log In</button>
+</div>);
+
+return(
+<div style={{minHeight:"100vh"}}>
+
+{/* HEADER */}
+<div style={{background:C.wh,borderBottom:"2px solid "+C.br,padding:"12px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8,position:"sticky",top:0,zIndex:100}}>
+<div style={{display:"flex",alignItems:"center",gap:16}}>
+<div><span style={{fontFamily:"Georgia,serif",letterSpacing:3,fontSize:14,color:C.ch}}>DESTA </span><span style={{fontFamily:"Georgia,serif",letterSpacing:3,fontSize:14,color:C.br}}>WORKS</span></div>
+<div style={{fontSize:16,fontWeight:700,color:C.bl}}>ATS</div>
+<div style={{fontSize:12,color:C.gy}}>Logged in as <strong>{user}</strong></div>
+</div>
+<div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+<select className="input" value={fc} onChange={function(e){sFC(e.target.value)}} style={{width:"auto",fontSize:12}}>
+<option value="all">All Clients</option>
+{CLIENTS.map(function(c){return <option key={c} value={c}>{c}</option>})}
+</select>
+{["kanban","table","kpi","activity"].map(function(v){return <button key={v} className={"tab"+(view===v?" on":"")} onClick={function(){sV(v)}}>{v==="kanban"?"Pipeline":v==="table"?"Table":v==="kpi"?"KPIs":"Activity"}</button>})}
+<button className="btn" onClick={function(){sAdd(true)}} style={{background:C.gn,color:C.wh}}>+ Add Candidate</button>
+{ld&&<div style={{width:14,height:14,border:"2px solid #E0E0E0",borderTopColor:C.bl,borderRadius:"50%",animation:"spin 1s linear infinite"}}/>}
+<button className="btn" onClick={load} style={{background:C.bl,color:C.wh}}>Refresh</button>
+</div>
+</div>
+
+{/* STAT BAR */}
+<div style={{display:"flex",gap:8,padding:"12px 20px",flexWrap:"wrap"}}>
+<div className="sb" style={{background:"#EBF0F8",border:"1px solid #C5D3E8"}}><div style={{fontSize:24,fontWeight:700,color:C.bl}}>{kpi.total}</div><div style={{fontSize:10,color:C.gy}}>Total</div></div>
+<div className="sb" style={{background:"#E8F5E9",border:"1px solid #A5D6A7"}}><div style={{fontSize:24,fontWeight:700,color:C.gn}}>{kpi.byStatus["7 - Placed"]||0}</div><div style={{fontSize:10,color:C.gy}}>Placed</div></div>
+<div className="sb" style={{background:"#FFF3E0",border:"1px solid #FFE0B2"}}><div style={{fontSize:24,fontWeight:700,color:C.or}}>{kpi.byStatus["3 - Client Submission"]||0}</div><div style={{fontSize:10,color:C.gy}}>Submitted</div></div>
+<div className="sb" style={{background:"#F3E5F5",border:"1px solid #CE93D8"}}><div style={{fontSize:24,fontWeight:700,color:C.pu}}>{kpi.byStatus["1 - Initial Screening"]||0}</div><div style={{fontSize:10,color:C.gy}}>Screening</div></div>
+<div className="sb" style={{background:C.iv,border:"1px solid #E0E0E0"}}><div style={{fontSize:24,fontWeight:700,color:C.ch}}>{kpi.thisWeek}</div><div style={{fontSize:10,color:C.gy}}>This Week</div></div>
+<div className="sb" style={{background:C.iv,border:"1px solid #E0E0E0"}}><div style={{fontSize:24,fontWeight:700,color:C.ch}}>{kpi.today}</div><div style={{fontSize:10,color:C.gy}}>Today</div></div>
+</div>
+
+{/* KANBAN VIEW */}
+{view==="kanban"&&(
+<div style={{display:"flex",gap:10,padding:"0 20px 20px",overflowX:"auto",paddingBottom:40}}>
+{STATUSES.map(function(status){
+var col=STATUS_COLORS[status];
+var cards=filtered.filter(function(c){return c.Status===status});
+return <div key={status} className="kanban-col">
+<div className="kanban-header" style={{background:col,color:C.wh}}>
+<span>{status.split(" - ")[1]}</span><span className="badge" style={{background:"rgba(255,255,255,.3)",color:C.wh}}>{cards.length}</span>
+</div>
+{cards.map(function(c){
+var licColor=c.LicenseStatus==="Active"?C.gn:c.LicenseStatus==="Expired"?C.rd:c.LicenseStatus==="Not Verified"?C.or:C.gy;
+return <div key={c.ID} className="kanban-card" onClick={function(){sSel(c.ID)}}>
+<div style={{fontWeight:700,marginBottom:3}}>{c.Name}</div>
+<div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:3}}>
+<span className="badge" style={{background:"#EBF0F8",color:C.bl}}>{c.Credential}</span>
+<span className="badge" style={{background:"#E8F5E9",color:C.gn}}>{c.LicenseState}</span>
+</div>
+<div style={{fontSize:11,color:C.gy}}>{c.Client}</div>
+<div style={{fontSize:10,color:licColor,fontWeight:600,marginTop:2}}>License: {c.LicenseStatus||"Not Verified"}</div>
+</div>})}
+{cards.length===0&&<div style={{fontSize:11,color:"#bbb",textAlign:"center",padding:20}}>No candidates</div>}
+</div>})}
+</div>
+)}
+
+{/* TABLE VIEW */}
+{view==="table"&&(
+<div style={{padding:"0 20px 20px",overflowX:"auto"}}>
+<table><thead><tr><th>Name</th><th>Credential</th><th>State</th><th>License</th><th>Client</th><th>Source</th><th>Status</th><th>Added</th></tr></thead>
+<tbody>{filtered.map(function(c){
+var licColor=c.LicenseStatus==="Active"?C.gn:c.LicenseStatus==="Expired"?C.rd:C.or;
+return <tr key={c.ID} style={{cursor:"pointer"}} onClick={function(){sSel(c.ID)}}>
+<td style={{fontWeight:600}}>{c.Name}</td>
+<td><span className="badge" style={{background:"#EBF0F8",color:C.bl}}>{c.Credential}</span></td>
+<td>{c.LicenseState}</td>
+<td><span style={{color:licColor,fontWeight:600,fontSize:12}}>{c.LicenseStatus||"Not Verified"}</span></td>
+<td style={{fontSize:12}}>{c.Client}</td>
+<td style={{fontSize:12}}>{c.Source}</td>
+<td><span className="badge" style={{background:STATUS_COLORS[c.Status]||"#999",color:C.wh}}>{c.Status?c.Status.split(" - ")[1]:""}</span></td>
+<td style={{fontSize:11,color:C.gy}}>{c.AddedAt?new Date(c.AddedAt).toLocaleDateString():""}</td>
+</tr>})}</tbody></table>
+{filtered.length===0&&<div style={{textAlign:"center",padding:40,color:C.gy}}>No candidates yet. Click "+ Add Candidate" to start.</div>}
+</div>)}
+
+{/* KPI VIEW */}
+{view==="kpi"&&(
+<div style={{padding:"0 20px 20px",maxWidth:800}}>
+<div style={{background:C.wh,borderRadius:8,padding:20,marginBottom:12,border:"1px solid #E0E0E0"}}>
+<div style={{fontSize:16,fontWeight:700,marginBottom:12}}>Pipeline by Status</div>
+{STATUSES.map(function(s){var cnt=kpi.byStatus[s]||0;var pct=kpi.total>0?Math.round(cnt/kpi.total*100):0;
+return <div key={s} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,fontSize:13}}>
+<div style={{minWidth:160}}>{s.split(" - ")[1]}</div>
+<div style={{flex:1,height:20,background:"#E0E0E0",borderRadius:4,overflow:"hidden",position:"relative"}}>
+<div style={{height:"100%",width:pct+"%",background:STATUS_COLORS[s],borderRadius:4,transition:"width .4s"}}/>
+<span style={{position:"absolute",right:6,top:2,fontSize:11,fontWeight:600,color:pct>50?C.wh:C.ch}}>{cnt}</span>
+</div></div>})}
+</div>
+<div style={{background:C.wh,borderRadius:8,padding:20,marginBottom:12,border:"1px solid #E0E0E0"}}>
+<div style={{fontSize:16,fontWeight:700,marginBottom:12}}>Pipeline by Client</div>
+{CLIENTS.map(function(c){var cnt=kpi.byClient[c]||0;
+return <div key={c} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,fontSize:13}}>
+<div style={{minWidth:180}}>{c}</div>
+<div style={{flex:1,height:20,background:"#E0E0E0",borderRadius:4,overflow:"hidden",position:"relative"}}>
+<div style={{height:"100%",width:(kpi.total>0?Math.round(cnt/kpi.total*100):0)+"%",background:C.bl,borderRadius:4}}/>
+<span style={{position:"absolute",right:6,top:2,fontSize:11,fontWeight:600}}>{cnt}</span>
+</div></div>})}
+</div>
+<div style={{background:C.wh,borderRadius:8,padding:20,border:"1px solid #E0E0E0"}}>
+<div style={{fontSize:16,fontWeight:700,marginBottom:12}}>Pipeline by Source</div>
+{SOURCES.map(function(s){var cnt=kpi.bySource[s]||0;if(cnt===0)return null;
+return <div key={s} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,fontSize:13}}>
+<div style={{minWidth:160}}>{s}</div>
+<div style={{flex:1,height:20,background:"#E0E0E0",borderRadius:4,overflow:"hidden",position:"relative"}}>
+<div style={{height:"100%",width:(kpi.total>0?Math.round(cnt/kpi.total*100):0)+"%",background:C.br,borderRadius:4}}/>
+<span style={{position:"absolute",right:6,top:2,fontSize:11,fontWeight:600}}>{cnt}</span>
+</div></div>})}
+</div>
+</div>)}
+
+{/* ACTIVITY VIEW */}
+{view==="activity"&&(
+<div style={{padding:"0 20px 20px",overflowX:"auto"}}>
+<table><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Candidate</th><th>Details</th></tr></thead>
+<tbody>{db.activity.slice().reverse().slice(0,100).map(function(a,i){
+return <tr key={i}><td style={{fontSize:11,color:C.gy,whiteSpace:"nowrap"}}>{a.Timestamp?new Date(a.Timestamp).toLocaleString():""}</td>
+<td style={{fontWeight:600}}>{a.User}</td>
+<td style={{color:C.bl,fontWeight:600,fontSize:12}}>{a.Action}</td>
+<td style={{cursor:"pointer"}} onClick={function(){if(a.CandidateID)sSel(a.CandidateID)}}>{a.CandidateName||""}</td>
+<td style={{fontSize:12,color:C.gy,maxWidth:300,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.Details||""}</td>
+</tr>})}</tbody></table>
+{db.activity.length===0&&<div style={{textAlign:"center",padding:40,color:C.gy}}>No activity yet.</div>}
+</div>)}
+
+{/* ADD CANDIDATE MODAL */}
+{showAdd&&<AddModal user={user} onClose={function(){sAdd(false)}} onSave={function(){sAdd(false);setTimeout(load,1500)}} isDuplicate={isDuplicate}/>}
+
+{/* CANDIDATE DETAIL MODAL */}
+{sel&&<DetailModal id={sel} db={db} user={user} onClose={function(){sSel(null)}} onUpdate={function(){setTimeout(load,1500)}}/>}
+
+</div>);
+}
+
+/* ========== ADD CANDIDATE MODAL ========== */
+function AddModal(p){
+var _f=useState({name:"",credential:"",licenseState:"",licenseNumber:"",client:"",source:"",email:"",phone:"",city:"",state:"",population:"",setting:"",telehealthPref:"",yearsExp:"",employer:""}),f=_f[0],sF=_f[1];
+var _saving=useState(false),saving=_saving[0],sSaving=_saving[1];
+var _dup=useState(false),dup=_dup[0],sDup=_dup[1];
+var set=function(k,v){var n=Object.assign({},f);n[k]=v;sF(n);if(k==="name"||k==="email")sDup(p.isDuplicate(k==="name"?v:f.name,k==="email"?v:f.email))};
+var save=function(){
+if(!f.name.trim()||!f.credential)return;
+sSaving(true);
+post(Object.assign({event:"ats_add_candidate",addedBy:p.user,status:"0 - New Candidate"},f)).then(function(){sSaving(false);p.onSave()});
+};
+return(
+<div className="modal-overlay" onClick={p.onClose}><div className="modal" onClick={function(e){e.stopPropagation()}} style={{animation:"fadeUp .3s ease"}}>
+<div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}>
+<div style={{fontSize:18,fontWeight:700,color:C.bl}}>Add New Candidate</div>
+<button className="btn" onClick={p.onClose} style={{background:"#eee",color:C.ch}}>Close</button>
+</div>
+{dup&&<div style={{background:"#FFEBEE",border:"1px solid "+C.rd,borderRadius:4,padding:10,marginBottom:12,fontSize:13,color:C.rd}}><strong>Possible duplicate detected.</strong> A candidate with this name or email may already exist.</div>}
+<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+<div><div style={{fontSize:11,color:C.gy,marginBottom:3}}>Full Name *</div><input className="input" value={f.name} onChange={function(e){set("name",e.target.value)}}/></div>
+<div><div style={{fontSize:11,color:C.gy,marginBottom:3}}>Credential *</div><select className="input" value={f.credential} onChange={function(e){set("credential",e.target.value)}}><option value="">Select...</option>{CREDENTIALS.map(function(c){return <option key={c}>{c}</option>})}</select></div>
+<div><div style={{fontSize:11,color:C.gy,marginBottom:3}}>License State</div><select className="input" value={f.licenseState} onChange={function(e){set("licenseState",e.target.value)}}><option value="">Select...</option>{["CT","NJ","FL","MA","NY","PA","Other"].map(function(s){return <option key={s}>{s}</option>})}</select></div>
+<div><div style={{fontSize:11,color:C.gy,marginBottom:3}}>License Number</div><input className="input" value={f.licenseNumber} onChange={function(e){set("licenseNumber",e.target.value)}}/></div>
+<div><div style={{fontSize:11,color:C.gy,marginBottom:3}}>Client</div><select className="input" value={f.client} onChange={function(e){set("client",e.target.value)}}><option value="">Select...</option>{CLIENTS.map(function(c){return <option key={c}>{c}</option>})}</select></div>
+<div><div style={{fontSize:11,color:C.gy,marginBottom:3}}>Source</div><select className="input" value={f.source} onChange={function(e){set("source",e.target.value)}}><option value="">Select...</option>{SOURCES.map(function(s){return <option key={s}>{s}</option>})}</select></div>
+<div><div style={{fontSize:11,color:C.gy,marginBottom:3}}>Email</div><input className="input" value={f.email} onChange={function(e){set("email",e.target.value)}}/></div>
+<div><div style={{fontSize:11,color:C.gy,marginBottom:3}}>Phone</div><input className="input" value={f.phone} onChange={function(e){set("phone",e.target.value)}}/></div>
+<div><div style={{fontSize:11,color:C.gy,marginBottom:3}}>City</div><input className="input" value={f.city} onChange={function(e){set("city",e.target.value)}}/></div>
+<div><div style={{fontSize:11,color:C.gy,marginBottom:3}}>Current Employer</div><input className="input" value={f.employer} onChange={function(e){set("employer",e.target.value)}}/></div>
+<div><div style={{fontSize:11,color:C.gy,marginBottom:3}}>Population</div><select className="input" value={f.population} onChange={function(e){set("population",e.target.value)}}><option value="">Select...</option>{POPULATIONS.map(function(p){return <option key={p}>{p}</option>})}</select></div>
+<div><div style={{fontSize:11,color:C.gy,marginBottom:3}}>Setting</div><select className="input" value={f.setting} onChange={function(e){set("setting",e.target.value)}}><option value="">Select...</option>{SETTINGS.map(function(s){return <option key={s}>{s}</option>})}</select></div>
+<div><div style={{fontSize:11,color:C.gy,marginBottom:3}}>Telehealth Preference</div><select className="input" value={f.telehealthPref} onChange={function(e){set("telehealthPref",e.target.value)}}><option value="">Select...</option><option>Telehealth Only</option><option>Hybrid</option><option>On-Site Only</option><option>No Preference</option></select></div>
+<div><div style={{fontSize:11,color:C.gy,marginBottom:3}}>Years Experience</div><input className="input" type="number" value={f.yearsExp} onChange={function(e){set("yearsExp",e.target.value)}}/></div>
+</div>
+<div style={{marginTop:16,display:"flex",gap:8,justifyContent:"flex-end"}}>
+<button className="btn" onClick={p.onClose} style={{background:"#eee",color:C.ch}}>Cancel</button>
+<button className="btn" onClick={save} disabled={saving||!f.name.trim()||!f.credential} style={{background:C.gn,color:C.wh,opacity:f.name.trim()&&f.credential?1:.4}}>{saving?"Saving...":"Add Candidate"}</button>
+</div>
+</div></div>);
+}
+
+/* ========== CANDIDATE DETAIL MODAL ========== */
+function DetailModal(p){
+var c=p.db.candidates.find(function(x){return x.ID===p.id});
+if(!c)return null;
+var notes=p.db.notes.filter(function(n){return n.CandidateID===p.id});
+var _tab=useState("details"),tab=_tab[0],sT=_tab[1];
+var _nt=useState(""),nt=_nt[0],sNt=_nt[1];
+var _ntype=useState("internal"),ntype=_ntype[0],sNtype=_ntype[1];
+var _ls=useState(c.LicenseStatus||"Not Verified"),ls=_ls[0],sLS=_ls[1];
+var _le=useState(c.LicenseExpiry||""),le=_le[0],sLE=_le[1];
+var _ln=useState(c.LicenseNumber||""),ln=_ln[0],sLN=_ln[1];
+
+var moveTo=function(status){
+post({event:"ats_move_candidate",id:c.ID,status:status,movedBy:p.user});p.onUpdate();
+};
+var addNote=function(){
+if(!nt.trim())return;
+post({event:"ats_add_note",candidateId:c.ID,candidateName:c.Name,noteType:ntype,author:p.user,text:nt.trim()});
+sNt("");p.onUpdate();
+};
+var verifyLicense=function(){
+post({event:"ats_verify_license",id:c.ID,licenseStatus:ls,licenseExpiry:le,licenseNumber:ln,verifiedBy:p.user});
+p.onUpdate();
+};
+var deleteCand=function(){
+post({event:"ats_delete_candidate",id:c.ID});p.onClose();p.onUpdate();
+};
+
+var licColor=ls==="Active"?C.gn:ls==="Expired"?C.rd:ls==="Under Investigation"?C.rd:C.or;
+var licLink=LIC_LINKS[c.LicenseState];
+
+return(
+<div className="modal-overlay" onClick={p.onClose}><div className="modal" onClick={function(e){e.stopPropagation()}} style={{animation:"fadeUp .3s ease"}}>
+<div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+<div>
+<div style={{fontSize:20,fontWeight:700}}>{c.Name}</div>
+<div style={{display:"flex",gap:4,marginTop:4,flexWrap:"wrap"}}>
+<span className="badge" style={{background:"#EBF0F8",color:C.bl,fontSize:12}}>{c.Credential}</span>
+<span className="badge" style={{background:"#E8F5E9",color:C.gn}}>{c.LicenseState}</span>
+<span className="badge" style={{background:STATUS_COLORS[c.Status],color:C.wh}}>{c.Status?c.Status.split(" - ")[1]:""}</span>
+</div>
+</div>
+<button className="btn" onClick={p.onClose} style={{background:"#eee",color:C.ch}}>Close</button>
+</div>
+
+{/* Move status */}
+<div style={{marginBottom:12}}>
+<div style={{fontSize:11,color:C.gy,marginBottom:4}}>Move to:</div>
+<div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+{STATUSES.map(function(s){var active=s===c.Status;
+return <button key={s} className="btn" onClick={function(){if(!active)moveTo(s)}} style={{background:active?STATUS_COLORS[s]:"#f0f0f0",color:active?C.wh:C.ch,fontSize:10,padding:"4px 8px",opacity:active?.5:1}}>{s.split(" - ")[1]}</button>
+})}</div>
+</div>
+
+<div style={{display:"flex",gap:6,marginBottom:12}}>
+{["details","license","notes"].map(function(t){return <button key={t} className={"tab"+(tab===t?" on":"")} onClick={function(){sT(t)}}>{t==="details"?"Details":t==="license"?"License Verification":"Notes"}</button>})}
+</div>
+
+{tab==="details"&&<div>
+<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,fontSize:13}}>
+<div><span style={{color:C.gy}}>Client:</span> <strong>{c.Client}</strong></div>
+<div><span style={{color:C.gy}}>Source:</span> {c.Source}</div>
+<div><span style={{color:C.gy}}>Email:</span> {c.Email||"—"}</div>
+<div><span style={{color:C.gy}}>Phone:</span> {c.Phone||"—"}</div>
+<div><span style={{color:C.gy}}>City:</span> {c.City||"—"}</div>
+<div><span style={{color:C.gy}}>Employer:</span> {c.Employer||"—"}</div>
+<div><span style={{color:C.gy}}>Population:</span> {c.Population||"—"}</div>
+<div><span style={{color:C.gy}}>Setting:</span> {c.Setting||"—"}</div>
+<div><span style={{color:C.gy}}>Telehealth:</span> {c.TelehealthPref||"—"}</div>
+<div><span style={{color:C.gy}}>Years Exp:</span> {c.YearsExp||"—"}</div>
+<div><span style={{color:C.gy}}>Added by:</span> {c.AddedBy||"—"}</div>
+<div><span style={{color:C.gy}}>Added:</span> {c.AddedAt?new Date(c.AddedAt).toLocaleDateString():""}</div>
+</div>
+<div style={{marginTop:16}}>
+<button className="btn" onClick={deleteCand} style={{background:C.rd,color:C.wh}}>Delete Candidate</button>
+</div>
+</div>}
+
+{tab==="license"&&<div>
+<div style={{background:licColor==="Active"?"#E8F5E9":"#FFF3E0",border:"1px solid "+(licColor===C.gn?"#A5D6A7":"#FFE0B2"),borderRadius:8,padding:16,marginBottom:12}}>
+<div style={{fontSize:16,fontWeight:700,color:licColor,marginBottom:4}}>Status: {ls}</div>
+{le&&<div style={{fontSize:13}}>Expires: {le}</div>}
+{ln&&<div style={{fontSize:13}}>License #: {ln}</div>}
+{c.LicenseVerifiedBy&&<div style={{fontSize:12,color:C.gy,marginTop:4}}>Verified by {c.LicenseVerifiedBy} on {c.LicenseVerifiedAt?new Date(c.LicenseVerifiedAt).toLocaleDateString():""}</div>}
+</div>
+{licLink&&<div style={{marginBottom:12}}>
+<div style={{fontSize:12,fontWeight:600,marginBottom:4}}>Verify on state board:</div>
+<a href={licLink.url} target="_blank" className="lic-link">{licLink.name} →</a>
+</div>}
+{!licLink&&c.LicenseState&&<div style={{marginBottom:12,fontSize:12,color:C.gy}}>No direct verification link for {c.LicenseState}. Try <a href="https://www.nursys.com" target="_blank" className="lic-link">nurses.com</a></div>}
+<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+<div><div style={{fontSize:11,color:C.gy,marginBottom:3}}>Status</div>
+<select className="input" value={ls} onChange={function(e){sLS(e.target.value)}}>
+<option>Not Verified</option><option>Active</option><option>Expired</option><option>Not Found</option><option>Under Investigation</option>
+</select></div>
+<div><div style={{fontSize:11,color:C.gy,marginBottom:3}}>Expiration Date</div><input className="input" type="date" value={le} onChange={function(e){sLE(e.target.value)}}/></div>
+<div><div style={{fontSize:11,color:C.gy,marginBottom:3}}>License Number</div><input className="input" value={ln} onChange={function(e){sLN(e.target.value)}}/></div>
+</div>
+<button className="btn" onClick={verifyLicense} style={{background:C.bl,color:C.wh}}>Save Verification</button>
+</div>}
+
+{tab==="notes"&&<div>
+<div style={{display:"flex",gap:8,marginBottom:12}}>
+<select className="input" value={ntype} onChange={function(e){sNtype(e.target.value)}} style={{width:"auto"}}>
+<option value="internal">Internal Note</option>
+<option value="client">Client-Facing Note</option>
+</select>
+<input className="input" value={nt} onChange={function(e){sNt(e.target.value)}} onKeyDown={function(e){if(e.key==="Enter")addNote()}} placeholder="Add a note..."/>
+<button className="btn" onClick={addNote} style={{background:C.bl,color:C.wh}}>Add</button>
+</div>
+{notes.length===0&&<div style={{color:C.gy,fontSize:13,textAlign:"center",padding:20}}>No notes yet.</div>}
+{notes.slice().reverse().map(function(n,i){
+return <div key={i} className={n.NoteType==="client"?"note-ext":"note-int"}>
+<div style={{fontSize:11,color:C.gy,marginBottom:2}}>{n.Author} — {n.Timestamp?new Date(n.Timestamp).toLocaleString():""} — <strong>{n.NoteType==="client"?"Client-Facing":"Internal"}</strong></div>
+<div>{n.Text}</div>
+</div>})}
+</div>}
+
+</div></div>);
+}
+
+ReactDOM.render(React.createElement(App),document.getElementById("root"));
+</script></body></html>
